@@ -1,0 +1,82 @@
+name: Desktop builds
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  desktop:
+    name: ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macOS-universal
+            runner: macos-latest
+            args: --target universal-apple-darwin --bundles dmg
+          - platform: Windows-x64
+            runner: windows-latest
+            args: --bundles nsis
+          - platform: Linux-x64
+            runner: ubuntu-22.04
+            args: --bundles deb,appimage
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Add Mac architectures
+        if: runner.os == 'macOS'
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+      - name: Install Linux audio and desktop build libraries
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libasound2-dev libgtk-3-dev libssl-dev patchelf libfuse2 xdg-utils
+      - name: Set up Windows codec compiler
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          install: make diffutils tar xz mingw-w64-ucrt-x86_64-gcc
+      - name: Build bundled Windows codecs
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: bash tools/prepare-codecs.sh x86_64-pc-windows-msvc
+      - name: Build bundled Mac and Linux codecs
+        if: runner.os != 'Windows'
+        run: bash tools/prepare-codecs.sh
+      - run: npm ci
+      - run: cargo test --locked --workspace --release
+      - run: npm run build -- ${{ matrix.args }} -- --locked
+      - name: Check the bundled Mac app
+        if: runner.os == 'macOS'
+        run: target/universal-apple-darwin/release/bundle/macos/Faderwake.app/Contents/MacOS/faderwake --selftest
+      - name: Check the Windows executable and codecs
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $result = Start-Process -FilePath .\target\release\faderwake.exe -ArgumentList '--selftest' -Wait -PassThru
+          exit $result.ExitCode
+      - name: Check the installed Linux app
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y ./target/release/bundle/deb/*.deb
+          /usr/bin/faderwake --selftest
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Faderwake-${{ matrix.platform }}
+          if-no-files-found: error
+          path: |
+            target/**/bundle/dmg/*.dmg
+            target/**/bundle/nsis/*.exe
+            target/**/bundle/deb/*.deb
+            target/**/bundle/appimage/*.AppImage

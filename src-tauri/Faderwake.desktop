@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Faderwake
+Comment=Master and edit audio files locally
+Exec=faderwake %F
+Icon=faderwake
+Terminal=false
+Categories=AudioVideo;Audio;AudioVideoEditing;
+MimeType=audio/x-wav;audio/wav;audio/vnd.wave;audio/x-aiff;audio/flac;audio/mp4;audio/x-m4a;audio/aac;audio/mpeg;audio/x-caf;audio/ogg;audio/opus;audio/x-opus+ogg;audio/x-ms-wma;

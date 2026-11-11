@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Faderwake</title>
+  <link rel="stylesheet" href="studio.css">
+  <link rel="stylesheet" href="workspace.css">
+  <link rel="stylesheet" href="editing.css">
+  <link rel="stylesheet" href="glass.css">
+</head>
+<body>
+  <header class="app-bar">
+    <div class="brand" aria-label="Faderwake">
+      <span class="brand-symbol" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+      <span>Faderwake</span>
+    </div>
+    <span class="bar-divider"></span><span class="workspace-name">Mastering studio</span>
+    <nav class="file-actions" aria-label="File">
+      <button id="appearance" class="secondary" title="Appearance and keyboard shortcuts" aria-label="Preferences"><i data-icon="settings"></i></button>
+      <button class="demo-button" id="demo" title="Open the included Half Light demo">Open demo</button>
+      <button class="secondary" id="open"><i data-icon="folder"></i>Add files</button>
+      <button class="primary" id="export" disabled><i data-icon="export"></i>Export…</button>
+    </nav>
+  </header>
+
+  <main>
+    <aside id="notice" class="notice" role="status" hidden>
+      <span id="notice-text"></span><button id="dismiss" aria-label="Dismiss message"><i data-icon="close"></i></button>
+    </aside>
+    <div class="workspace-layout">
+      <aside id="queue-panel" aria-label="Track queue">
+        <div class="queue-header"><h2>Track queue</h2><span id="queue-count">0</span></div>
+        <div id="queue-items" aria-label="Tracks"></div>
+        <button id="queue-add" class="secondary"><i data-icon="plus"></i>Add audio files</button>
+        <div class="queue-actions"><button id="reveal" disabled>Show file</button><button id="remove" disabled>Remove</button></div>
+      </aside>
+      <div class="workspace-column">
+      <div class="workspace-tabs">
+        <button id="toggle-queue" aria-expanded="false" aria-controls="queue-panel"><i data-icon="list"></i>Queue</button>
+        <nav aria-label="Workspace"><button class="tab" data-tab="master" aria-pressed="true">Master</button><button class="tab" data-tab="editor" aria-pressed="false">Editor</button><button class="tab" data-tab="metadata" aria-pressed="false">Metadata</button></nav>
+        <div class="master-toolbar" id="master-toolbar" hidden><div class="section-picker"><button id="tone-section" aria-pressed="true">Equalizer &amp; polish</button><button id="dynamics-section" aria-pressed="false">Dynamics &amp; stereo</button></div><button id="manage-presets" class="secondary">Chain presets…</button></div>
+        <div class="history"><button id="undo" title="Undo" aria-label="Undo" disabled><i data-icon="undo"></i></button><button id="redo" title="Redo" aria-label="Redo" disabled><i data-icon="redo"></i></button></div>
+      </div>
+      <div id="welcome" class="panel"><h1>Add your first track</h1><p>Drop audio files here to start mastering.</p><div><button id="retry-track" class="secondary" hidden>Try again</button><button id="start-open" class="primary">Add audio files</button><button id="start-demo" class="secondary">Open Half Light demo</button></div></div>
+      <div class="desk" id="desk" hidden>
+      <section class="panel source" aria-labelledby="track-name">
+        <div class="track-top">
+          <canvas id="track-art" width="64" height="64" aria-hidden="true"></canvas>
+          <div class="track-info">
+            <div class="eyebrow"><span class="signal-line"></span><span id="source-type">Source track</span></div>
+            <h1 id="track-name">Open a track</h1>
+            <p class="track-format" id="track-format">WAV audio</p>
+          </div>
+          <label class="select-shell visual-mode"><select id="visual" aria-label="Track visualization"><option value="waveform">Waveform</option><option value="spectrogram">Spectrogram</option></select><i data-icon="down"></i></label>
+        </div>
+        <div class="timeline">
+          <canvas id="wave" aria-hidden="true"></canvas>
+          <input id="seek" type="range" min="0" max="1" step="0.01" value="0" aria-label="Playback position" disabled>
+        </div>
+        <div class="transport">
+          <button id="stop" class="icon-only rewind" title="Stop playback" aria-label="Stop" disabled><i data-icon="stop"></i></button>
+          <button id="rewind" class="icon-only rewind" title="Return to start (Home)" aria-label="Return to start" disabled><i data-icon="rewind"></i></button>
+          <button id="play" class="play" title="Play (Space)" aria-label="Play" disabled><i data-icon="play"></i></button>
+          <span class="clock"><b id="clock">00:00</b><span class="clock-divider">/</span><span id="duration">00:00</span></span>
+          <div class="audition" role="group" aria-label="Audition source">
+            <button id="original" aria-pressed="false" disabled><span>A</span>Original</button>
+            <button id="master" aria-pressed="true" disabled><span>B</span>Mastered</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel meter-panel" aria-labelledby="meter-title">
+        <div class="sidebar-title"><span class="section-icon"><i data-icon="meter"></i></span><h2 id="meter-title">Output monitor</h2></div>
+        <div class="level-block">
+          <div class="micro-heading"><span>Stereo level</span><span>dBFS</span></div>
+          <div class="meter" id="meter-left" role="meter" aria-label="Left playback level" aria-valuemin="-60" aria-valuemax="0" aria-valuenow="-60"><b>L</b><div class="meter-rail"><i></i></div><output aria-hidden="true">−∞</output></div>
+          <div class="meter" id="meter-right" role="meter" aria-label="Right playback level" aria-valuemin="-60" aria-valuemax="0" aria-valuenow="-60"><b>R</b><div class="meter-rail"><i></i></div><output aria-hidden="true">−∞</output></div>
+          <div class="meter-scale"><span>−60</span><span>−36</span><span>−12</span><span>0</span></div>
+        </div>
+        <div class="readouts">
+          <div title="Integrated input file loudness"><span>Input</span><strong id="input-lufs">—</strong><small>LUFS-I</small></div>
+          <div title="Integrated loudness of the auditioned file"><span id="lufs-label">Master</span><strong id="lufs">—</strong><small>LUFS-I</small></div>
+          <div><span id="peak-label">True peak</span><strong id="true-peak">—</strong><small>dBTP</small></div>
+        </div>
+        <div class="mini-meters"><span title="Momentary loudness">M <b id="momentary">—</b></span><span title="Short-term loudness">S <b id="short-term">—</b></span><span title="Loudness range in LU">LRA <b id="range">—</b></span><span title="Stereo phase correlation">Phase <b id="phase">—</b></span></div>
+        <label class="match-row" title="Match playback loudness when comparing original and mastered audio. Export uses the mastering chain."><span><i data-icon="match"></i>Loudness match</span><input id="match" type="checkbox" role="switch" checked disabled><span class="switch" aria-hidden="true"></span></label>
+      </section>
+
+      <section class="panel equalizer" aria-labelledby="eq-title">
+        <div class="eq-top">
+          <div class="eq-title-block"><div class="eyebrow"><span class="signal-line cyan"></span>Tone shaping</div><h2 id="eq-title">Parametric EQ</h2></div>
+          <label class="preset-label"><span>Mastering preset</span><span class="select-shell"><select id="preset" aria-label="Mastering preset" disabled></select><i data-icon="down"></i></span></label>
+        </div>
+        <div id="graph-wrap" class="graph-wrap"><canvas id="graph" aria-label="Equalizer response. Drag a node to set frequency and gain. Each band also has numeric controls in Band settings."></canvas><canvas id="spectrum-layer" aria-hidden="true"></canvas></div>
+        <div class="eq-tools"><label><input type="checkbox" id="enable-eq" checked> Enable EQ</label><span id="graph-state"></span><button class="text-button" id="reset-eq" title="Reset the ten bands while preserving the rest of the chain">Reset EQ</button></div>
+        <div class="band-nav"><span>Bands</span><div id="bands" role="group" aria-label="Select equalizer band"></div></div>
+      </section>
+
+      <section class="panel inspector" aria-labelledby="band-title">
+        <div class="sidebar-title"><span class="section-icon"><i data-icon="band"></i></span><h2 id="band-title">Band settings</h2></div>
+        <div class="band-ident"><span class="band-id" id="band-id">01</span><span class="select-shell"><select id="shape" aria-label="Filter shape" disabled></select><i data-icon="down"></i></span><label class="band-power" title="Enable selected band"><input type="checkbox" id="enabled" aria-label="Enable selected band" disabled><i data-icon="power"></i></label></div>
+        <div id="parameters">
+          <div class="parameter" data-kind="frequency"><label for="frequency">Frequency</label><div class="number-shell"><input id="frequency" type="number" min="20" max="20000" step="1" disabled><span>Hz</span></div><input id="frequency-slider" type="range" min="0" max="1000" step="1" aria-label="Band frequency slider" disabled></div>
+          <div class="parameter" data-kind="gain"><label for="gain">Gain</label><div class="number-shell"><input id="gain" type="number" min="-18" max="18" step="0.1" disabled><span>dB</span></div><input id="gain-slider" type="range" min="-18" max="18" step="0.1" aria-label="Band gain slider" disabled></div>
+          <div class="parameter" data-kind="q"><label for="q">Q factor</label><div class="number-shell"><input id="q" type="number" min="0.2" max="12" step="0.01" disabled></div><input id="q-slider" type="range" min="0" max="1000" step="1" aria-label="Band Q factor slider" disabled></div>
+        </div>
+      </section>
+      <section id="polish" class="panel mastering-extra"><div class="mastering-extra-header"><h2>Polish chain</h2></div><div id="polish-chips"></div></section>
+      <section id="dynamics" class="mastering-dynamics" hidden></section>
+      <section id="output-strip" class="panel output-strip"><h2>Track output</h2><div id="output-fields"></div></section>
+      </div>
+      <section id="editor-pane" class="tab-content" aria-label="Audio editor" hidden></section>
+      <section id="metadata-pane" class="tab-content" aria-label="Metadata editor" hidden></section>
+      </div>
+    </div>
+    <div id="export-progress" hidden><progress max="1" value="0"></progress><span>Exporting</span><button id="cancel-export">Cancel export</button></div>
+    <footer><span id="engine-state"><i class="status-lamp"></i><span id="engine-text">Initializing audio</span></span><button hidden id="reveal-export" class="text-button">Show export</button><span class="shortcuts"><kbd>Space</kbd> Play / pause <span class="short-sep">·</span> <kbd>←</kbd><kbd>→</kbd> Seek 5 s</span></footer>
+  </main>
+  <dialog id="preferences-dialog" aria-labelledby="preferences-dialog-title"><h2 id="preferences-dialog-title">Preferences</h2><div id="theme-controls"></div>
+    <div id="glass-preference" hidden>
+      <label for="liquid-glass"><span>Liquid Glass</span><input id="liquid-glass" type="checkbox" switch role="switch" aria-describedby="glass-description"></label>
+      <p id="glass-description"></p>
+    </div>
+    <details><summary>Keyboard shortcuts</summary><dl id="shortcut-list"></dl></details><button class="primary dialog-close">Done</button></dialog>
+  <dialog id="presets-dialog" aria-labelledby="presets-dialog-title"><h2 id="presets-dialog-title">Chain presets</h2><label>Preset name<input id="preset-name" type="text" maxlength="100" placeholder="Name this chain"></label><div class="dialog-row"><button id="save-preset" class="secondary">Save current chain</button></div><label>Saved presets<select id="saved-presets"></select></label><div class="dialog-row"><button id="import-legacy" hidden>Import from AI Music Remastering</button><button id="apply-saved">Apply</button><button id="delete-saved">Delete</button></div><div class="dialog-row"><button id="apply-queue" class="secondary">Apply chain to queue</button><button id="reset-chain" class="secondary">Reset track chain</button></div><p class="dialog-note" role="status"></p><button class="primary dialog-close">Done</button></dialog>
+  <dialog id="export-dialog" aria-labelledby="export-dialog-title"><h2 id="export-dialog-title">Export master</h2><label>Export<select id="export-scope"><option value="one">Selected track</option><option value="all">Entire queue</option></select></label><div id="export-summary"></div><div class="dialog-row"><button class="secondary dialog-close">Cancel</button><button class="primary" id="confirm-export">Choose destination…</button></div></dialog>
+  <script type="module" src="studio.js"></script>
+</body>
+</html>

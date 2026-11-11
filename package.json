@@ -1,0 +1,15 @@
+{
+  "name": "faderwake",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "codecs": "bash tools/prepare-codecs.sh",
+    "predev": "npm run codecs",
+    "prebuild": "npm run codecs"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

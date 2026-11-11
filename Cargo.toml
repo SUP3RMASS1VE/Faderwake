@@ -1,0 +1,7 @@
+[workspace]
+members = ["crates/master-core", "src-tauri"]
+resolver = "2"
+
+# Keep native DSP fast when developing against a debug desktop shell.
+[profile.dev.package.master-core]
+opt-level = 2

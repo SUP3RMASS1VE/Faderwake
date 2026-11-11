@@ -1,0 +1,6 @@
+{
+  "identifier": "studio",
+  "description": "Local mastering window",
+  "windows": ["main"],
+  "permissions": ["core:default", "core:window:allow-set-theme"]
+}
