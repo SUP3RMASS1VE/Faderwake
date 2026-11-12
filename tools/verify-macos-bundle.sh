@@ -7,7 +7,7 @@ executables="$bundle/Contents/MacOS"
 /usr/bin/codesign --verify --deep --strict "$bundle"
 for name in faderwake faderwake-ffmpeg faderwake-ffprobe; do
   for slice in arm64 x86_64; do
-    /usr/bin/lipo -verify_arch "$slice" "$executables/$name" || {
+    /usr/bin/lipo "$executables/$name" -verify_arch "$slice" || {
       echo "$name is missing its $slice slice in $bundle" >&2
       exit 1
     }

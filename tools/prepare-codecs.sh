@@ -32,7 +32,7 @@ verify_codec() {
   esac
   [[ -x "$binary" ]] || return 1
   for slice in "${slices[@]}"; do
-    /usr/bin/lipo -verify_arch "$slice" "$binary" || return 1
+    /usr/bin/lipo "$binary" -verify_arch "$slice" || return 1
   done
 }
 ready=true
