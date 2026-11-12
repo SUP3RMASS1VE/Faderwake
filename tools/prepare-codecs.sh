@@ -15,14 +15,31 @@ case "$target:$(uname -s)" in
 esac
 suffix=
 [[ "$target" == *windows* ]] && suffix=.exe
-if [[ "$target" == macos ]]; then
+if [[ "$target" == macos || "$target" == universal-apple-darwin ]]; then
   triples=(aarch64-apple-darwin x86_64-apple-darwin universal-apple-darwin)
 else
   triples=("$target")
 fi
+verify_codec() {
+  local binary=$1 triple=$2 slice
+  local -a slices
+  [[ -s "$binary" ]] || return 1
+  case "$triple" in
+    aarch64-apple-darwin) slices=(arm64) ;;
+    x86_64-apple-darwin) slices=(x86_64) ;;
+    universal-apple-darwin) slices=(arm64 x86_64) ;;
+    *) return 0 ;;
+  esac
+  [[ -x "$binary" ]] || return 1
+  for slice in "${slices[@]}"; do
+    /usr/bin/lipo -verify_arch "$slice" "$binary" || return 1
+  done
+}
 ready=true
 for triple in "${triples[@]}"; do
-  for app in ffmpeg ffprobe; do [[ -s "$output/faderwake-$app-$triple$suffix" ]] || ready=false; done
+  for app in ffmpeg ffprobe; do
+    verify_codec "$output/faderwake-$app-$triple$suffix" "$triple" || ready=false
+  done
   [[ -f "$output/$triple.stamp" ]] && [[ "$(cat "$output/$triple.stamp")" == "$expected-v2" ]] || ready=false
 done
 if [[ "$ready" == true ]]; then exit 0; fi
@@ -66,5 +83,11 @@ for triple in "${triples[@]}"; do
     make -j"${FADERWAKE_JOBS:-8}" ffmpeg"$suffix" ffprobe"$suffix"
     for app in ffmpeg ffprobe; do cp "$app$suffix" "$output/faderwake-$app-$triple$suffix"; done
   fi
+  for app in ffmpeg ffprobe; do
+    verify_codec "$output/faderwake-$app-$triple$suffix" "$triple" || {
+      echo "Invalid $triple build of $app" >&2
+      exit 1
+    }
+  done
   echo "$expected-v2" > "$output/$triple.stamp"
 done

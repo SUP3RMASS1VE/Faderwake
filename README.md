@@ -6,11 +6,13 @@ Faderwake is a local desktop mastering and waveform-editing app for macOS, Windo
 
 1. Choose **Open demo** to try *Half Light* with Warm Glue, or **Add files** to import audio. You can also drop files onto the window.
 2. Press **Space** to play. Switch between **Original** and **Mastered** and turn on **Loudness match** to compare the sound at a similar listening level. Click the waveform or spectrogram to seek.
-3. In **Master**, drag any of the ten EQ handles. Use **Band settings** to set its frequency, gain, Q, and filter shape. **Dynamics & stereo** contains the compressor, de-esser, width, loudness target, and true-peak ceiling. The polish controls include bass centering, low-end cleanup, mud and harshness reduction, high-frequency smoothing, and air.
+3. In **Master**, drag any of the ten EQ handles. Use **Band settings** to set its frequency, gain, Q, and filter shape. **Dynamics & stereo** contains the compressor, de-esser, width, loudness target, and true-peak ceiling.
 4. In **Editor**, drag across a waveform to select a region. You can zoom, snap boundaries to zero crossings, loop a selection, cut, copy, paste, trim, fade, reverse, silence, normalize, and apply gain. Undo and redo work across edits. Edits stay in the session until export.
 5. Use **Metadata** to edit the title, artist, album, genre, year, track number, and comment. Choose **Track output** for that track, then **Export…** for a single track or the queue. Loudness matching affects monitoring only.
 
 Each track has its own chain and output settings. Start with one of seven built-in presets, save a custom chain, or apply a chain or a set of tags across the queue. **Preferences** includes appearance, accent colors, and keyboard shortcuts.
+
+To hear one **Polish chain** switch, play a passage in **B · Mastered** and toggle that switch. A checkmark means it is active in playback and export. The EQ graph shows the ten editable bands. **Clean low end** rolls off rumble below 30 Hz. **Center bass** narrows stereo bass below 120 Hz and leaves centered bass alone. **Cut mud** reduces 250 Hz by 3 dB. **Tame harshness** softens frequencies around 4 and 6 kHz. **Add air** lifts the top end with a high shelf at 12 kHz. **De-shimmer AI highs** dynamically tames bright high frequencies and rolls off the top end around 16 kHz.
 
 The main controls fit in the default window. The shorter layout keeps the waveform, EQ, polish chain and output selectors together. On narrower displays the track queue opens from the queue button. Smaller windows can scroll when the controls need more room.
 
@@ -45,6 +47,8 @@ npm run build -- -- --locked
 ```
 
 For a universal Mac app, install both Apple Rust targets and run `npm run build -- --target universal-apple-darwin --bundles app -- --locked`. The included desktop workflow can also build a Windows installer and Linux Debian and AppImage packages on their respective runners.
+
+Local Mac builds ad hoc sign the app and its bundled audio helpers. Run `bash tools/verify-macos-bundle.sh dist/Faderwake.app` to verify the installed signature, check both CPU architectures, and exercise the codecs on the Mac’s native architecture.
 
 Run the packaged executable with `--selftest` to render the bundled demo, compare its loudness and true peak with the Swift reference, and export and reopen all four formats. The check writes to a temporary directory and returns a nonzero exit code on failure.
 

@@ -22,6 +22,80 @@ fn wait_master(studio: &Studio) {
         std::thread::sleep(Duration::from_millis(5));
     }
 }
+
+#[test]
+fn polish_controls_reach_the_monitored_master_and_export() {
+    let tmp = TempDir::new().unwrap();
+    let rate = 44100;
+    let mut samples = Vec::new();
+    for i in 0..rate / 2 {
+        let phase = std::f64::consts::TAU * i as f64 / rate as f64;
+        let mid = [18., 250., 4500., 14500.]
+            .iter()
+            .map(|hz| (hz * phase).sin() * 0.08)
+            .sum::<f64>();
+        let side = (70. * phase).sin() * 0.08;
+        samples.extend([(mid + side) as f32, (mid - side) as f32]);
+    }
+    let path = tmp.path().join("polish-input.wav");
+    let input = Audio {
+        samples,
+        sample_rate: rate,
+        channels: 2,
+    };
+    master_core::write_wav(&path, &input).unwrap();
+    let studio = Studio::new();
+    let id = studio.add(vec![path], false).unwrap().id;
+    let dry = studio.audio(id, true).unwrap();
+    let flat = Settings {
+        clean_low_end: false,
+        normalize: false,
+        limit: false,
+        ..Settings::default()
+    };
+    for key in [
+        "cleanLowEnd",
+        "centerBass",
+        "cutMud",
+        "tameHarsh",
+        "addAir",
+        "smoothHighs",
+    ] {
+        let mut payload = serde_json::to_value(&flat).unwrap();
+        payload[key] = serde_json::Value::Bool(true);
+        let settings: Settings = serde_json::from_value(payload).unwrap();
+        studio
+            .update_settings(id, settings.clone(), None, None, None, None)
+            .unwrap();
+        // Capture the export immediately, including the path used before a new
+        // monitored master is ready. Each iteration replaces the previous chain.
+        let plan = studio.plan_export(false).unwrap();
+        let dest = tmp.path().join(format!("{key}.wav"));
+        studio.export_to(plan, dest.clone(), false).unwrap();
+        wait_master(&studio);
+        let expected = master_core::render(&dry, &settings).unwrap();
+        let monitored = studio.audio(id, false).unwrap();
+        let exported = master_core::decode_wav(&std::fs::read(dest).unwrap()).unwrap();
+        assert!(
+            expected
+                .samples
+                .iter()
+                .zip(&dry.samples)
+                .any(|(a, b)| (a - b).abs() > 0.001),
+            "{key} left the dedicated test signal unchanged"
+        );
+        assert_eq!(monitored.samples, expected.samples, "{key} master");
+        assert_eq!(exported.samples.len(), expected.samples.len());
+        assert!(
+            exported
+                .samples
+                .iter()
+                .zip(&expected.samples)
+                .all(|(a, b)| (a - b).abs() < 0.000001),
+            "{key} exported different samples"
+        );
+    }
+}
 #[test]
 fn export_uses_latest_gesture_preserves_source_and_groups_undo() {
     let tmp = TempDir::new().unwrap();

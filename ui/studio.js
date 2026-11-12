@@ -466,34 +466,37 @@ function markEdit({ instant = false, presetChange = false, output = null } = {})
 }
 function flushEdits() {
   clearTimeout(timer);
-  if (writeTask) return writeTask.then(() => flushEdits());
-  if (!pending) return Promise.resolve();
-  writeTask = (async () => {
-    while (pending) {
-      const { revision, ...payload } = pending;
-      pending = null;
-      try {
-        await invoke('update_settings', { ...payload, editId: revision });
-        shell.recordNative(payload.gestureId);
-        if (revision === localRevision) {
-          status.rendering = true;
-          statusGeneration++;
-        }
-      } catch (error) {
-        if (revision === localRevision) {
-          failedEdit = true;
-          report(error);
-        }
+  if (!pending) return writeTask || Promise.resolve();
+  // Continuous slider movement is debounced in markEdit. Once a button click
+  // or a finished gesture is submitted, later settings must not replace it.
+  const { revision, ...payload } = pending;
+  pending = null;
+  const previous = writeTask;
+  const writing = (async () => {
+    if (previous) await previous;
+    try {
+      await invoke('update_settings', { ...payload, editId: revision });
+      shell.recordNative(payload.gestureId);
+      if (revision === localRevision) {
+        status.rendering = true;
+        statusGeneration++;
+      }
+    } catch (error) {
+      if (revision === localRevision) {
+        failedEdit = true;
+        report(error);
       }
     }
   })().finally(() => {
+    if (writeTask !== writing) return;
     writeTask = null;
     syncAvailability();
     poll();
     updateQueue().catch(report);
   });
+  writeTask = writing;
   syncAvailability();
-  return writeTask;
+  return writing;
 }
 async function loadTrack(demo) {
   if (busy || !invoke) return;
@@ -670,16 +673,18 @@ seekBar.onpointercancel = () => {
   showPosition(status.position);
 };
 
-async function applyPreset(preset, custom, id = track?.id) {
+async function applyPreset(preset, definition, id = track?.id) {
   if (!id || loadingPreset || busy) return;
   loadingPreset = true;
+  // Only an early startup action can precede the native preset catalogue.
+  if (!definition) busy = 'Loading preset';
   syncAvailability();
   try {
-    const settings = custom
-      ? structuredClone(custom.settings)
+    const settings = definition
+      ? structuredClone(definition.settings)
       : await invoke('get_preset_settings', { preset });
     const output = structuredClone(
-      custom?.output || { format: 'wav', sampleRate: 44100, bitDepth: 24 },
+      definition?.output || { format: 'wav', sampleRate: 44100, bitDepth: 24 },
     );
     if (track?.id !== id) {
       const token = ++gestureCounter;
@@ -710,6 +715,7 @@ async function applyPreset(preset, custom, id = track?.id) {
     report(e);
     updatePresetName();
   } finally {
+    if (!definition) busy = '';
     loadingPreset = false;
     syncAvailability();
   }

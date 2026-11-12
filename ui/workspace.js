@@ -68,6 +68,7 @@ export function mountWorkspace(bridge) {
     localRedo = [],
     lastNativeToken = null;
   let nativeAppearance;
+  const builtInPresets = new Map();
   function applyTheme() {
     const nativeWindow = window.__TAURI__?.window?.getCurrentWindow?.();
     if (nativeWindow && nativeAppearance !== appearance) {
@@ -168,10 +169,11 @@ export function mountWorkspace(bridge) {
   }
   async function loadPresets() {
     const result = await Promise.all(
-      builtIns.map(async (name) => [
-        fingerprint(await bridge.invoke('get_preset_settings', { preset: name }), defaultOutput),
-        name,
-      ]),
+      builtIns.map(async (name) => {
+        const settings = await bridge.invoke('get_preset_settings', { preset: name });
+        builtInPresets.set(name, { settings, output: defaultOutput });
+        return [fingerprint(settings, defaultOutput), name];
+      }),
     );
     // In case two presets have identical settings, the first built-in name wins.
     builtInKeys = new Map(result.reverse());
@@ -411,9 +413,9 @@ export function mountWorkspace(bridge) {
       $('presets-dialog').close();
     });
   async function applyPreset(name, id = bridge.getSnapshot().track?.id) {
-    const custom = saved.find((p) => p.name === name);
     if (id === undefined) return;
-    await bridge.applyPreset(name, custom, id);
+    const preset = saved.find((p) => p.name === name) || builtInPresets.get(name);
+    await bridge.applyPreset(name, preset, id);
   }
   function openExport(all = false) {
     const s = bridge.getSnapshot();

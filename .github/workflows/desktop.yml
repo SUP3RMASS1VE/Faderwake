@@ -59,7 +59,7 @@ jobs:
       - run: npm run build -- ${{ matrix.args }} -- --locked
       - name: Check the bundled Mac app
         if: runner.os == 'macOS'
-        run: target/universal-apple-darwin/release/bundle/macos/Faderwake.app/Contents/MacOS/faderwake --selftest
+        run: bash tools/verify-macos-bundle.sh target/universal-apple-darwin/release/bundle/macos/Faderwake.app
       - name: Check the Windows executable and codecs
         if: runner.os == 'Windows'
         shell: pwsh
