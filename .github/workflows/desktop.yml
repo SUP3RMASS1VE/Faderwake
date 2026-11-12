@@ -59,7 +59,11 @@ jobs:
       - run: npm run build -- ${{ matrix.args }} -- --locked
       - name: Check the bundled Mac app
         if: runner.os == 'macOS'
-        run: bash tools/verify-macos-bundle.sh target/universal-apple-darwin/release/bundle/macos/Faderwake.app
+        run: |
+          mountpoint=$(mktemp -d)
+          hdiutil attach -readonly -nobrowse -mountpoint "$mountpoint" target/universal-apple-darwin/release/bundle/dmg/*.dmg
+          trap 'hdiutil detach "$mountpoint"' EXIT
+          bash tools/verify-macos-bundle.sh "$mountpoint/Faderwake.app"
       - name: Check the Windows executable and codecs
         if: runner.os == 'Windows'
         shell: pwsh
