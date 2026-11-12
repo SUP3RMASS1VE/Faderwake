@@ -1082,7 +1082,6 @@ dependencies = [
  "cpal",
  "fastrand",
  "master-core",
- "plist",
  "serde",
  "serde_json",
  "tauri",

@@ -177,49 +177,7 @@ export function mountWorkspace(bridge) {
     );
     // In case two presets have identical settings, the first built-in name wins.
     builtInKeys = new Map(result.reverse());
-    if (onMac && !stored('legacy-presets-imported', false)) {
-      try {
-        await importLegacy();
-      } catch (error) {
-        bridge.notify('Could not import saved presets: ' + String(error));
-      }
-    }
   }
-  const onMac = /Mac/i.test(navigator.platform);
-  $('import-legacy').hidden = !onMac;
-  async function importLegacy() {
-    const presets = await bridge.invoke('import_legacy_presets');
-    if (!Array.isArray(presets)) throw Error('Unexpected preset data.');
-    const names = new Set(
-      [...builtIns, ...saved.map((item) => item.name)].map((name) => name.toLowerCase()),
-    );
-    const additions = [];
-    for (const preset of presets) {
-      const name = preset.name?.trim();
-      if (!name || !preset.settings || !preset.output || names.has(name.toLowerCase())) continue;
-      names.add(name.toLowerCase());
-      additions.push({ ...preset, name });
-    }
-    if (additions.length) restorePresets([...saved, ...additions]);
-    save('legacy-presets-imported', true);
-    return additions.length;
-  }
-  $('import-legacy').onclick = async () => {
-    const b = $('import-legacy');
-    b.disabled = true;
-    try {
-      const count = await importLegacy();
-      presetNote(
-        count
-          ? 'Imported ' + count + ' saved ' + (count === 1 ? 'preset.' : 'presets.')
-          : 'No new saved presets found.',
-      );
-    } catch (error) {
-      presetNote(String(error));
-    } finally {
-      b.disabled = false;
-    }
-  };
   function renderQueue(s) {
     const signature = String(s.status.playing) + '/' + s.track?.id;
     if (previousQueue === s.queue && signature === previousQueueState && previousSaved === saved)

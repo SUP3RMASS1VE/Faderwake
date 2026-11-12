@@ -1,6 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod glass;
-mod legacy;
 mod media;
 mod menus;
 mod resample;
@@ -401,7 +400,6 @@ fn main() {
             remove_track,
             get_preset,
             get_preset_settings,
-            legacy::import_legacy_presets,
             update_master,
             update_settings,
             set_output,

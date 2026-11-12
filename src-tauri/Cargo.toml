@@ -25,9 +25,6 @@ cpal = "0.15.3"
 arc-swap = "1.7"
 master-core = { path = "../crates/master-core" }
 
-[target.'cfg(target_os = "macos")'.dependencies]
-plist = "1"
-
 [target.'cfg(any(target_os = "windows", target_os = "linux"))'.dependencies]
 tauri-plugin-single-instance = "2"
 
