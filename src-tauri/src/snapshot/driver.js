@@ -10,6 +10,12 @@ const wait = async (condition, description) => {
 };
 await wait(() => document.querySelectorAll('#theme-controls select').length === 2, 'application startup');
 const invoke = window.__TAURI__.core.invoke;
+if (!$('snapshot-motion')) {
+    const style = document.createElement('style');
+    style.id = 'snapshot-motion';
+    style.textContent = '* { transition: none !important; animation: none !important; }';
+    document.head.append(style);
+}
 const [palette, appearance] = document.querySelectorAll('#theme-controls select');
 function choose(control, value) {
     control.value = value;
@@ -39,7 +45,7 @@ if (args.page === 'empty') {
     const tab = editor ? 'editor' : args.page === 'metadata' ? 'metadata' : 'master';
     document.querySelector('[data-tab="' + tab + '"]').click();
     if (tab !== 'editor') {
-        $('visual').value = args.page === 'spectrum' ? 'spectrogram' : 'waveform';
+        $('visual').value = args.page === 'spectrum' ? 'spectrogram' : 'combined';
         await $('visual').onchange();
     }
     if (tab === 'master') {
@@ -55,4 +61,21 @@ if (args.page === 'empty') {
 await document.fonts.ready;
 window.scrollTo(0,0);
 await sleep(220);
+if (document.documentElement.scrollWidth > innerWidth + 1) throw Error('Horizontal page overflow');
+for (const selector of ['.app-bar', '.source', '.meter-panel', '.equalizer', '.inspector', '#polish', '#output-strip']) {
+    const element = document.querySelector(selector);
+    if (element?.getClientRects().length && element.scrollWidth > element.clientWidth + 2) {
+        throw Error('Clipped content in ' + selector);
+    }
+}
+if (args.page === 'master' && innerWidth >= 1200 && innerHeight >= 820 && $('output-strip').getBoundingClientRect().bottom > innerHeight) {
+    const sizes = ['.source', '.equalizer', '#polish', '#output-strip'].map(selector => {
+        const rect = document.querySelector(selector).getBoundingClientRect();
+        return selector + '=' + Math.round(rect.height) + '@' + Math.round(rect.top);
+    });
+    throw Error('Master controls exceed viewport ' + innerHeight + ': ' + sizes.join(', '));
+}
+const exportLabel = document.createRange();
+exportLabel.selectNodeContents($('export'));
+if (exportLabel.getBoundingClientRect().width > $('export').clientWidth) throw Error('Clipped Export label');
 return true;

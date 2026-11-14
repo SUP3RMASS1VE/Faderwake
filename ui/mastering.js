@@ -91,7 +91,10 @@ export function mountMastering(bridge) {
   $('tone-section').onclick = () => switchSection('tone');
   $('dynamics-section').onclick = () => switchSection('dynamics');
   for (const [key, title] of polishStages) {
-    const button = element('button', title);
+    const button = element('button');
+    const power = element('span', '⏻', 'stage-power');
+    power.setAttribute('aria-hidden', 'true');
+    button.append(power, element('span', title));
     button.onclick = () => updateSetting(key, !getValue(bridge.getSnapshot().settings, key));
     chips.set(key, button);
     $('polish-chips').append(button);

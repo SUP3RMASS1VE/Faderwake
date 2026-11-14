@@ -1,6 +1,8 @@
+import { artworkHue } from './displays.js';
+
 const $ = (id) => document.getElementById(id);
 const palettes = {
-  studio: ['Studio', '#ffc076'],
+  studio: ['Studio', '#ffb84d'],
   system: ['System', 'AccentColor'],
   ocean: ['Ocean', '#65caff'],
   amethyst: ['Amethyst', '#c6a0ff'],
@@ -83,7 +85,7 @@ export function mountWorkspace(bridge) {
       appearance === 'system' ? (appearanceQuery.matches ? 'dark' : 'light') : appearance;
     document.documentElement.dataset.palette = palette;
     document.documentElement.style.setProperty('--amber', color);
-    document.documentElement.style.setProperty('--teal', palette === 'studio' ? '#a9dcd1' : color);
+    document.documentElement.style.setProperty('--teal', palette === 'studio' ? '#26dbc7' : color);
     bridge.redraw();
   }
   for (const sel of [paletteSelect, appearanceSelect]) {
@@ -187,18 +189,20 @@ export function mountWorkspace(bridge) {
     previousSaved = saved;
     $('queue-count').textContent = s.queue.length;
     $('queue-items').replaceChildren(
-      ...s.queue.map((item, i) => {
+      ...s.queue.map((item) => {
         const row = document.createElement('button');
         row.className = 'queue-track';
         row.dataset.trackId = item.id;
         row.setAttribute('aria-pressed', String(item.selected));
         const slot = document.createElement('span');
         slot.className = 'queue-index';
+        slot.style.setProperty('--art-hue', artworkHue(item.name) + 'deg');
+        slot.setAttribute('aria-hidden', 'true');
         slot.textContent = item.error
           ? '!'
           : item.selected && s.status.playing
             ? '▶'
-            : String(i + 1).padStart(2, '0');
+            : '';
         const text = document.createElement('span'),
           name = document.createElement('strong'),
           detail = document.createElement('small');

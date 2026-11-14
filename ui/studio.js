@@ -5,6 +5,7 @@ import { mountMetadata } from './metadata.js';
 import { mountGlass } from './glass.js';
 import {
   clamp,
+  bandColors,
   drawArtwork,
   drawEq,
   drawWave,
@@ -312,10 +313,15 @@ function applyTrack(next, demo, fresh) {
 function drawSource() {
   if (!track) return;
   if (loadedArtwork !== track.peaks) {
-    drawArtwork(byId('track-art'), track.peaks);
+    drawArtwork(byId('track-art'), track.peaks, track.name);
     loadedArtwork = track.peaks;
   }
-  drawWave(byId('wave'), { ...track, peaks: currentPeaks || track.peaks }, currentSpec);
+  drawWave(
+    byId('wave'),
+    { ...track, peaks: currentPeaks || track.peaks },
+    currentSpec,
+    byId('visual').value === 'combined',
+  );
   showPosition(status.position);
 }
 async function loadVisual() {
@@ -338,11 +344,12 @@ async function loadVisual() {
   if (!original && status.rendering) return;
   const id = track.id;
   try {
-    if (kind === 'spectrogram') {
+    if (kind === 'spectrogram' || kind === 'combined') {
       const data = await invoke('spectrogram', { trackId: id, original });
       if (key !== visualKey) return;
       currentSpec = spectrogramImage(data);
-    } else if (!original) {
+    }
+    if (kind !== 'spectrogram' && !original) {
       const peaks = await invoke('get_overview', { trackId: id, original: false });
       if (key !== visualKey) return;
       currentPeaks = peaks;
@@ -377,6 +384,7 @@ function selectBand(index) {
 function updateBandLabels() {
   [...byId('bands').children].forEach((button, i) => {
     button.setAttribute('aria-pressed', String(i === selected));
+    button.style.setProperty('--band-color', bandColors[i]);
     const band = track?.bands[i];
     button.classList.toggle('off', !!band && !band.enabled);
     if (band) {
@@ -398,6 +406,7 @@ function refreshInspector() {
   const b = track?.bands[selected];
   if (!b) return;
   byId('band-id').textContent = String(selected + 1).padStart(2, '0');
+  document.querySelector('.inspector').style.setProperty('--band-color', bandColors[selected]);
   byId('shape').value = b.shape;
   byId('enabled').checked = b.enabled;
   for (const key of fields) {
@@ -579,7 +588,15 @@ function paintStatus() {
       clipped = value >= 1;
     reading.textContent = clipped ? 'CLIP' : value > 0.001 ? db.toFixed(1) : '−∞';
     reading.classList.toggle('clipped', clipped);
-    meter.querySelector('.meter-rail').style.setProperty('--level', ((db + 60) / 60) * 100 + '%');
+    const rail = meter.querySelector('.meter-rail');
+    const now = performance.now();
+    const held = Number(rail.dataset.peak ?? -60);
+    const elapsed = now - Number(rail.dataset.peakTime || 0);
+    const peak = status.playing ? Math.max(db, elapsed > 900 ? held - 2 : held) : -60;
+    if (db >= held || !status.playing) rail.dataset.peakTime = String(now);
+    rail.dataset.peak = String(peak);
+    rail.style.setProperty('--level', ((db + 60) / 60) * 100 + '%');
+    rail.style.setProperty('--peak', ((peak + 60) / 60) * 100 + '%');
   }
   syncAvailability();
 }

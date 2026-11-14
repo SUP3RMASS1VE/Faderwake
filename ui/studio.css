@@ -8,15 +8,15 @@
     sans-serif;
   font-size: 14px;
   font-synthesis: none;
-  --bg: #111416;
-  --panel: #1a1e21;
-  --edge: #343a3d;
-  --line: #303639;
-  --ink: #f1f0eb;
-  --muted: #a4acab;
-  --dim: #889290;
-  --amber: #ffc076;
-  --teal: #a9dcd1;
+  --bg: #0b1014;
+  --panel: #141b20;
+  --edge: #2c353b;
+  --line: #263036;
+  --ink: #edf2f4;
+  --muted: #a6b2ba;
+  --dim: #83939e;
+  --amber: #ffb84d;
+  --teal: #26dbc7;
   --mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
 }
 * {

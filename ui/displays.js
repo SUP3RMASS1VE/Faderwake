@@ -9,6 +9,15 @@ export const timecode = (seconds) => {
   return clock.map((value) => String(value).padStart(2, '0')).join(':');
 };
 
+export const bandColors = ['#ffc657', '#51dfcf', '#83e094', '#b8a0f5', '#f49bc8', '#7bd9f3', '#ffb66e', '#7faafb', '#e5a0e6', '#42ddbc'];
+export function artworkHue(name = '') {
+  let hash = 0;
+  for (const character of name) hash = (hash * 31 + character.charCodeAt(0)) | 0;
+  return [65, 0, 120, 240][Math.abs(hash) % 4];
+}
+const artwork = new Image();
+artwork.src = new URL('./studio-art.jpg', import.meta.url).href;
+
 function surface(canvas) {
   const w = canvas.clientWidth,
     h = canvas.clientHeight;
@@ -25,10 +34,20 @@ function surface(canvas) {
   return { ctx, w, h };
 }
 
-export function drawArtwork(canvas, peaks = []) {
+export function drawArtwork(canvas, peaks = [], name = '') {
   const target = surface(canvas);
   if (!target) return;
   const { ctx, w, h } = target;
+  if (artwork.complete && artwork.naturalWidth) {
+    ctx.save();
+    canvas.style.filter = `hue-rotate(${artworkHue(name)}deg)`;
+    const side = Math.min(artwork.naturalWidth, artwork.naturalHeight);
+    const scale = Math.max(w / side, h / side);
+    ctx.drawImage(artwork, (w - side * scale) / 2, (h - side * scale) / 2, side * scale, side * scale);
+    ctx.restore();
+    return;
+  }
+  artwork.onload = () => drawArtwork(canvas, peaks, name);
   const backdrop = ctx.createLinearGradient(0, 0, w, h);
   backdrop.addColorStop(0, '#e7a164');
   backdrop.addColorStop(0.48, '#aa6241');
@@ -52,32 +71,37 @@ export function drawArtwork(canvas, peaks = []) {
   }
 }
 
-export function drawWave(canvas, track, spectrogram = null) {
+export function drawWave(canvas, track, spectrogram = null, combined = false) {
   const target = surface(canvas);
   if (!target) return;
   const { ctx, w, h } = target;
-  const top = 4,
-    bottom = h - 19,
-    cy = (top + bottom) / 2,
+  const styles = getComputedStyle(document.documentElement);
+  const top = 8,
+    bottom = h - 20,
+    waveBottom = combined && spectrogram ? top + (bottom - top) * 0.65 : bottom,
+    cy = (top + waveBottom) / 2,
     pad = 7;
-  if (spectrogram) ctx.drawImage(spectrogram, pad, top, w - 2 * pad, bottom - top);
+  if (spectrogram) {
+    const spectrumTop = combined ? waveBottom + 4 : top;
+    ctx.drawImage(spectrogram, pad, spectrumTop, w - 2 * pad, bottom - spectrumTop);
+  }
   const steps = w < 410 ? 4 : 6;
   ctx.font = '9px "SFMono-Regular", Consolas, monospace';
   for (let step = 0; step <= steps; step++) {
     const x = Math.round(pad + ((w - 2 * pad) * step) / steps) + 0.5;
-    ctx.strokeStyle = '#2b302f';
+    ctx.strokeStyle = styles.getPropertyValue('--line').trim();
     ctx.beginPath();
     ctx.moveTo(x, 0);
     ctx.lineTo(x, bottom + 3);
     ctx.stroke();
     if (track) {
-      ctx.fillStyle = '#939b94';
+      ctx.fillStyle = styles.getPropertyValue('--muted').trim();
       ctx.textAlign = step === 0 ? 'left' : step === steps ? 'right' : 'center';
       ctx.fillText(timecode((track.duration * step) / steps), x, h - 5);
     }
   }
-  if (spectrogram) return;
-  ctx.strokeStyle = '#4a443b';
+  if (spectrogram && !combined) return;
+  ctx.strokeStyle = styles.getPropertyValue('--line').trim();
   ctx.beginPath();
   ctx.moveTo(0, Math.round(cy) + 0.5);
   ctx.lineTo(w, Math.round(cy) + 0.5);
@@ -86,9 +110,11 @@ export function drawWave(canvas, track, spectrogram = null) {
   const peaks = track.peaks;
   const columns = Math.max(1, Math.min(Math.floor(w - pad * 2), peaks.length));
   const gradient = ctx.createLinearGradient(0, top, 0, bottom);
-  gradient.addColorStop(0, '#ffca8c');
-  gradient.addColorStop(0.5, '#e7ac73');
-  gradient.addColorStop(1, '#bb7f55');
+  const light = document.documentElement.dataset.appearance === 'light';
+  const teal = styles.getPropertyValue('--teal').trim() || '#26dbc7';
+  gradient.addColorStop(0, light ? '#087f78' : '#7af7df');
+  gradient.addColorStop(0.5, teal);
+  gradient.addColorStop(1, light ? '#087f78' : '#118d84');
   ctx.fillStyle = gradient;
   const laneWidth = (w - 2 * pad) / columns;
   for (let i = 0; i < columns; i++) {
@@ -96,7 +122,7 @@ export function drawWave(canvas, track, spectrogram = null) {
     const end = Math.max(start + 1, Math.floor(((i + 1) * peaks.length) / columns));
     let peak = 0;
     for (let j = start; j < end; j++) peak = Math.max(peak, Math.abs(peaks[j]));
-    const half = clamp(peak, 0, 1) * (bottom - top) * 0.49;
+    const half = clamp(peak, 0, 1) * (waveBottom - top) * 0.49;
     if (half > 0)
       ctx.fillRect(pad + i * laneWidth, cy - half, Math.max(1, laneWidth * 0.85), 2 * half);
   }
@@ -186,20 +212,21 @@ export function drawEq(canvas, track, selected, bypassed = false) {
   const rate = track?.output?.sampleRate || track?.sampleRate || 48000;
   const plot = graphScale(canvas, rate);
   const bottom = plot.top + plot.height;
+  const light = document.documentElement.dataset.appearance === 'light';
   const bg = ctx.createLinearGradient(0, 0, 0, h);
-  bg.addColorStop(0, '#192022');
-  bg.addColorStop(1, '#14191a');
+  bg.addColorStop(0, light ? '#f0f6f5' : '#101b21');
+  bg.addColorStop(1, light ? '#e4eeec' : '#0b1419');
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, w, h);
   ctx.font = '9px "SFMono-Regular", Consolas, monospace';
   for (const db of [-18, -12, -6, 0, 6, 12, 18]) {
     const y = Math.round(plot.y(db)) + 0.5;
-    ctx.strokeStyle = db === 0 ? '#46544f' : '#2b3434';
+    ctx.strokeStyle = db === 0 ? (light ? '#92aaa6' : '#3b5358') : (light ? '#d0dfdc' : '#233239');
     ctx.beginPath();
     ctx.moveTo(plot.left, y);
     ctx.lineTo(w - 14, y);
     ctx.stroke();
-    ctx.fillStyle = db === 0 ? '#c2cec7' : '#939f99';
+    ctx.fillStyle = light ? '#4e6965' : '#99afb7';
     ctx.textAlign = 'right';
     ctx.fillText(db > 0 ? '+' + db : String(db).replace('-', '−'), plot.left - 8, y + 3);
   }
@@ -209,14 +236,14 @@ export function drawEq(canvas, track, selected, bypassed = false) {
       const hz = decade * multiple;
       if (hz < 20 || hz > plot.topHz) continue;
       const x = Math.round(plot.x(hz)) + 0.5;
-      ctx.strokeStyle = labels.includes(hz) ? '#303a39' : '#222b2b';
+      ctx.strokeStyle = labels.includes(hz) ? (light ? '#c6d8d3' : '#27383e') : (light ? '#dce7e4' : '#19282e');
       ctx.beginPath();
       ctx.moveTo(x, plot.top);
       ctx.lineTo(x, bottom);
       ctx.stroke();
     }
   }
-  ctx.fillStyle = '#9ba6a0';
+  ctx.fillStyle = light ? '#4e6965' : '#99afb7';
   ctx.textAlign = 'center';
   for (const hz of labels) {
     if (hz > plot.topHz * 1.015) continue;
@@ -246,14 +273,14 @@ export function drawEq(canvas, track, selected, bypassed = false) {
   fill.lineTo(plot.left, bottom);
   fill.closePath();
   const tint = ctx.createLinearGradient(0, plot.top, 0, bottom);
-  tint.addColorStop(0, 'rgba(137,210,180,.25)');
-  tint.addColorStop(1, 'rgba(137,210,180,.015)');
+  tint.addColorStop(0, 'rgba(38,219,199,.32)');
+  tint.addColorStop(1, 'rgba(38,219,199,.02)');
   ctx.fillStyle = tint;
   ctx.fill(fill);
   ctx.lineWidth = 2;
   ctx.strokeStyle = bypassed
     ? '#929c97'
-    : getComputedStyle(document.documentElement).getPropertyValue('--teal').trim() || '#a5d7c4';
+    : light ? '#087f78' : getComputedStyle(document.documentElement).getPropertyValue('--teal').trim() || '#26dbc7';
   ctx.setLineDash(bypassed ? [5, 4] : []);
   ctx.stroke(path);
   ctx.setLineDash([]);
@@ -262,21 +289,22 @@ export function drawEq(canvas, track, selected, bypassed = false) {
     ...nodes.filter((n) => n.index === selected),
   ]) {
     const active = node.index === selected;
+    const color = node.enabled && !bypassed ? bandColors[node.index] : '#71858c';
     if (active) {
       ctx.beginPath();
-      ctx.arc(node.x, node.y, 12, 0, 2 * Math.PI);
-      ctx.fillStyle = 'rgba(170,221,198,.14)';
+      ctx.arc(node.x, node.y, 15, 0, 2 * Math.PI);
+      ctx.fillStyle = color + '30';
       ctx.fill();
     }
     ctx.beginPath();
-    ctx.arc(node.x, node.y, active ? 8 : 6.5, 0, 2 * Math.PI);
-    ctx.fillStyle = active ? '#c0e6d1' : '#23382e';
+    ctx.arc(node.x, node.y, active ? 10 : 8, 0, 2 * Math.PI);
+    ctx.fillStyle = color;
     ctx.fill();
     ctx.lineWidth = 1;
-    ctx.strokeStyle = node.enabled ? '#acdbc3' : '#6b8276';
+    ctx.strokeStyle = active ? '#edf9f6' : '#0a2028';
     ctx.stroke();
-    ctx.fillStyle = active ? '#203129' : node.enabled ? '#cde6d6' : '#89998e';
-    ctx.font = '8px monospace';
+    ctx.fillStyle = '#071c22';
+    ctx.font = '600 9px monospace';
     ctx.textAlign = 'center';
     ctx.fillText(String(node.index + 1), node.x, node.y + 2.7);
   }
@@ -324,9 +352,12 @@ export function drawSpectrum(canvas, bins, rate) {
   }
   ctx.lineTo(plot.left + plot.width, floor);
   ctx.closePath();
-  ctx.fillStyle = 'rgba(121,170,219,.15)';
+  const gradient = ctx.createLinearGradient(0, plot.top, 0, floor);
+  gradient.addColorStop(0, 'rgba(38,219,199,.22)');
+  gradient.addColorStop(1, 'rgba(38,219,199,.02)');
+  ctx.fillStyle = gradient;
   ctx.fill();
   ctx.lineWidth = 1;
-  ctx.strokeStyle = 'rgba(140,185,219,.58)';
+  ctx.strokeStyle = 'rgba(38,219,199,.38)';
   ctx.stroke();
 }
