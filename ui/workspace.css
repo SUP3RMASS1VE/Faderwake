@@ -788,12 +788,19 @@ dialog summary {
   --control: linear-gradient(180deg, var(--surface), var(--panel));
   --accent-ink: color-mix(in srgb, var(--amber) 78%, var(--ink));
 }
+html {
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+}
 body {
+  display: flex;
+  flex-direction: column;
   background: radial-gradient(ellipse at 48% 0, #1a252c 0, transparent 58%), var(--bg);
 }
 .app-bar {
   display: grid;
   grid-template-columns: auto 1fr auto;
+  flex-shrink: 0;
   height: 64px;
   gap: 24px;
   padding-inline: 20px;
@@ -860,9 +867,14 @@ button:hover:not(:disabled) {
 }
 main {
   max-width: 1920px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   padding: 12px 20px;
 }
 .workspace-layout {
+  flex: 1;
   grid-template-columns: 184px minmax(0, 1fr);
   gap: 16px;
 }
@@ -872,7 +884,8 @@ main {
   border-right: 1px solid var(--line);
   border-radius: 0;
   background: transparent;
-  min-height: calc(100vh - 112px);
+  min-height: 0;
+  align-self: stretch;
 }
 .queue-header {
   padding: 0 4px 16px;

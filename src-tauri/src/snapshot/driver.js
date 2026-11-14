@@ -62,6 +62,20 @@ await document.fonts.ready;
 window.scrollTo(0,0);
 await sleep(220);
 if (document.documentElement.scrollWidth > innerWidth + 1) throw Error('Horizontal page overflow');
+window.scrollTo(100, 0);
+if (scrollX !== 0) throw Error('Horizontal page scrolling');
+if (['empty', 'master', 'editor', 'metadata'].includes(args.page) && innerWidth >= 1400 && innerHeight >= 868 && document.documentElement.scrollHeight > innerHeight + 1) {
+    const sizes = ['.app-bar', 'main', '.workspace-layout', '#queue-panel', '.source', '.equalizer', '#polish', '#output-strip', 'footer'].map(selector => {
+        const rect = document.querySelector(selector).getBoundingClientRect();
+        return selector + '=' + Math.round(rect.height) + '@' + Math.round(rect.top);
+    });
+    throw Error('Unnecessary vertical scrolling: ' + document.documentElement.scrollHeight + ' > ' + innerHeight + ': ' + sizes.join(', '));
+}
+if (args.page === 'master' && innerHeight < 600) {
+    window.scrollTo(0, document.documentElement.scrollHeight);
+    if ($('output-strip').getBoundingClientRect().bottom > innerHeight) throw Error('Track output cannot be reached by scrolling');
+    window.scrollTo(0, 0);
+}
 for (const selector of ['.app-bar', '.source', '.meter-panel', '.equalizer', '.inspector', '#polish', '#output-strip']) {
     const element = document.querySelector(selector);
     if (element?.getClientRects().length && element.scrollWidth > element.clientWidth + 2) {
