@@ -1,8 +1,5 @@
 #import <AppKit/AppKit.h>
 #import <WebKit/WebKit.h>
-#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 260000
-#import <ScreenCaptureKit/ScreenCaptureKit.h>
-#endif
 
 typedef void (*Completion)(void *, const char *);
 
@@ -95,71 +92,4 @@ void fw_snapshot_about(void *view, const char *input, void *context, Completion 
     NSError *error = nil;
     [data writeToFile:[NSString stringWithUTF8String:input] options:NSDataWritingAtomic error:&error];
     done(context, message(error));
-}
-
-void fw_snapshot_present(void *view, const char *input, void *context, Completion done) {
-    (void)input;
-    WKWebView *webview = (__bridge WKWebView *)view;
-    [webview.window orderBack:nil];
-    done(context, NULL);
-}
-
-void fw_snapshot_window(void *view, const char *input, void *context, Completion done) {
-    WKWebView *webview = (__bridge WKWebView *)view;
-// WebKit content snapshots exclude sibling native layers. ScreenCaptureKit can
-// capture this process's own compositor surface without reading other windows.
-#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 260000
-    if (@available(macOS 26, *)) {
-        const CGWindowID wid = (CGWindowID)webview.window.windowNumber;
-        NSString *path = [NSString stringWithUTF8String:input];
-        [SCShareableContent getCurrentProcessShareableContentWithCompletionHandler:^(
-                                SCShareableContent *content, NSError *error) {
-            if (error) {
-                done(context, message(error));
-                return;
-            }
-            SCWindow *own = nil;
-            for (SCWindow *candidate in content.windows)
-                if (candidate.windowID == wid) {
-                    own = candidate;
-                    break;
-                }
-            if (!own) {
-                done(context, "The snapshot window is unavailable to the macOS compositor.");
-                return;
-            }
-            SCContentFilter *filter = [[SCContentFilter alloc] initWithDesktopIndependentWindow:own];
-            SCStreamConfiguration *config = [SCStreamConfiguration new];
-            config.width = (size_t)round(filter.contentRect.size.width * filter.pointPixelScale);
-            config.height = (size_t)round(filter.contentRect.size.height * filter.pointPixelScale);
-            config.showsCursor = NO;
-            config.ignoreShadowsSingleWindow = YES;
-            [SCScreenshotManager
-                captureImageWithFilter:filter
-                         configuration:config
-                     completionHandler:^(CGImageRef image, NSError *captureError) {
-                         if (captureError || !image) {
-                             done(context,
-                                  captureError ? message(captureError) : "Empty window snapshot.");
-                             return;
-                         }
-                         NSBitmapImageRep *bitmap = [[NSBitmapImageRep alloc] initWithCGImage:image];
-                         NSData *png = [bitmap representationUsingType:NSBitmapImageFileTypePNG
-                                                            properties:@{}];
-                         NSError *writeError = nil;
-                         if (!png) {
-                             done(context, "Could not encode the window snapshot.");
-                             return;
-                         }
-                         [png writeToFile:path options:NSDataWritingAtomic error:&writeError];
-                         done(context, message(writeError));
-                     }];
-        }];
-        return;
-    }
-#else
-    (void)webview;
-    (void)input;
-#endif
-    done(context, "Glass compositor snapshots require the macOS 26 SDK and runtime.");
 }

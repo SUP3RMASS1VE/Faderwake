@@ -2,7 +2,6 @@ import { mountMastering } from './mastering.js';
 import { mountWorkspace } from './workspace.js';
 import { mountEditor } from './editor.js';
 import { mountMetadata } from './metadata.js';
-import { mountGlass } from './glass.js';
 import {
   clamp,
   bandColors,
@@ -984,7 +983,6 @@ const bridge = {
 };
 mastering = mountMastering(bridge);
 shell = mountWorkspace(bridge);
-mountGlass(bridge);
 controllers.editor = mountEditor(byId('editor-pane'), bridge);
 controllers.metadata = mountMetadata(byId('metadata-pane'), bridge);
 shell.applyTheme();

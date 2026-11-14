@@ -37,7 +37,6 @@ struct Plan {
     pages: Vec<String>,
     palette: String,
     sweep: bool,
-    glass: bool,
 }
 
 pub fn active() -> bool {
@@ -121,7 +120,6 @@ pub fn configure(mut context: Context<Wry>) -> Result<Context<Wry>, String> {
         pages,
         palette,
         sweep: filter.is_none(),
-        glass: env::var("APP_SNAPSHOT_GLASS").is_ok_and(|value| value == "1"),
     })
     .map_err(|_| "Snapshot mode already initialized")?;
     Ok(context)
@@ -131,18 +129,6 @@ type Done = extern "C" fn(*mut c_void, *const c_char);
 type WebKitCall = unsafe extern "C" fn(*mut c_void, *const c_char, *mut c_void, Done);
 extern "C" {
     fn fw_snapshot_script(
-        view: *mut c_void,
-        input: *const c_char,
-        context: *mut c_void,
-        done: Done,
-    );
-    fn fw_snapshot_present(
-        view: *mut c_void,
-        input: *const c_char,
-        context: *mut c_void,
-        done: Done,
-    );
-    fn fw_snapshot_window(
         view: *mut c_void,
         input: *const c_char,
         context: *mut c_void,
@@ -221,9 +207,6 @@ fn capture_all(webview: &Webview, plan: &Plan) -> Result<(), String> {
         .resource_dir()
         .map_err(|e| e.to_string())?
         .join("assets/Half Light.wav");
-    if plan.glass {
-        webkit(webview, fw_snapshot_present, "")?;
-    }
     let mut track_id = None;
     let mut capture = |page: &str, palette: &str, prefix: &str| -> Result<(), String> {
         if page != "empty" && track_id.is_none() {
@@ -280,8 +263,7 @@ fn capture_all(webview: &Webview, plan: &Plan) -> Result<(), String> {
             app.emit("queue-changed", ()).map_err(|e| e.to_string())?;
         }
         for mode in ["light", "dark"] {
-            let args =
-                serde_json::json!({ "page":page,"palette":palette,"mode":mode,"glass":plan.glass });
+            let args = serde_json::json!({ "page":page,"palette":palette,"mode":mode });
             let body = format!("const args = {args};\n{}", include_str!("driver.js"));
             webkit(webview, fw_snapshot_script, &body)
                 .map_err(|e| format!("{page} ({mode}): {e}"))?;
@@ -290,8 +272,6 @@ fn capture_all(webview: &Webview, plan: &Plan) -> Result<(), String> {
                 webview,
                 if page == "about" {
                     fw_snapshot_about
-                } else if plan.glass {
-                    fw_snapshot_window
                 } else {
                     fw_snapshot_capture
                 },

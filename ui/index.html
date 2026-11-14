@@ -8,7 +8,6 @@
   <link rel="stylesheet" href="studio.css">
   <link rel="stylesheet" href="workspace.css">
   <link rel="stylesheet" href="editing.css">
-  <link rel="stylesheet" href="glass.css">
 </head>
 <body>
   <header class="app-bar">
@@ -118,10 +117,6 @@
     <footer><span id="engine-state"><i class="status-lamp"></i><span id="engine-text">Initializing audio</span></span><button hidden id="reveal-export" class="text-button">Show export</button><span class="shortcuts"><kbd>Space</kbd> Play / pause <span class="short-sep">·</span> <kbd>←</kbd><kbd>→</kbd> Seek 5 s</span></footer>
   </main>
   <dialog id="preferences-dialog" aria-labelledby="preferences-dialog-title"><h2 id="preferences-dialog-title">Preferences</h2><div id="theme-controls"></div>
-    <div id="glass-preference" hidden>
-      <label for="liquid-glass"><span>Liquid Glass</span><input id="liquid-glass" type="checkbox" switch role="switch" aria-describedby="glass-description"></label>
-      <p id="glass-description"></p>
-    </div>
     <details><summary>Keyboard shortcuts</summary><dl id="shortcut-list"></dl></details><button class="primary dialog-close">Done</button></dialog>
   <dialog id="presets-dialog" aria-labelledby="presets-dialog-title"><h2 id="presets-dialog-title">Chain presets</h2><label>Preset name<input id="preset-name" type="text" maxlength="100" placeholder="Name this chain"></label><div class="dialog-row"><button id="save-preset" class="secondary">Save current chain</button></div><label>Saved presets<select id="saved-presets"></select></label><div class="dialog-row"><button id="apply-saved">Apply</button><button id="delete-saved">Delete</button></div><div class="dialog-row"><button id="apply-queue" class="secondary">Apply chain to queue</button><button id="reset-chain" class="secondary">Reset track chain</button></div><p class="dialog-note" role="status"></p><button class="primary dialog-close">Done</button></dialog>
   <dialog id="export-dialog" aria-labelledby="export-dialog-title"><h2 id="export-dialog-title">Export master</h2><label>Export<select id="export-scope"><option value="one">Selected track</option><option value="all">Entire queue</option></select></label><div id="export-summary"></div><div class="dialog-row"><button class="secondary dialog-close">Cancel</button><button class="primary" id="confirm-export">Choose destination…</button></div></dialog>

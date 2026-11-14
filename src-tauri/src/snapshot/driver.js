@@ -25,12 +25,6 @@ function choose(control, value) {
 if ($('preferences-dialog').open) $('preferences-dialog').close();
 choose(palette, args.palette);
 choose(appearance, args.mode);
-if (args.glass) {
-    const state = await invoke('get_glass_availability');
-    if (!state.supported || state.reduceTransparency) throw Error('Liquid Glass requires an available native material and Reduce Transparency off.');
-    if (!$('liquid-glass').checked) $('liquid-glass').click();
-    await wait(() => document.documentElement.hasAttribute('data-liquid-glass'), 'native Liquid Glass');
-}
 if (args.page === 'empty') {
     if ($('welcome').hidden || (await invoke('get_queue')).length) throw Error('Expected an empty studio.');
 } else {

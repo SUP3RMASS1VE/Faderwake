@@ -4,16 +4,16 @@ Faderwake is a desktop audio mastering and waveform editor for macOS, Windows an
 
 [Download the latest release](https://github.com/SUP3RMASS1VE/Faderwake/releases/latest)
 
-![The Master workspace showing the Half Light demo’s spectrogram, ten-band EQ curve, loudness meters and Polish controls](docs/screenshots/mastering-studio.webp)
+![Faderwake 0.2.0 showing the Half Light artwork, combined waveform and spectrogram, ten-band EQ, output monitor and polish chain](docs/screenshots/mastering-studio.webp)
 
-## Install Faderwake 0.1.0
+## Install Faderwake 0.2.0
 
 | Platform | Release download | Open the app |
 | --- | --- | --- |
-| macOS 15 or later, Apple silicon or Intel | [Universal Mac ZIP](https://github.com/SUP3RMASS1VE/Faderwake/releases/download/v0.1.0/Faderwake-macOS-universal.zip) | Extract the ZIP, drag **Faderwake.app** to Applications and open it. |
-| Windows x64 | [Portable Windows ZIP](https://github.com/SUP3RMASS1VE/Faderwake/releases/download/v0.1.0/Faderwake-Windows-x64.zip) | Extract the entire folder and open **Faderwake.exe** inside it. |
-| Ubuntu 24.04, Intel or AMD 64-bit | [Linux x64 Debian package](https://github.com/SUP3RMASS1VE/Faderwake/releases/download/v0.1.0/Faderwake-Linux-x64.deb) | From the download directory, run `sudo apt install ./Faderwake-Linux-x64.deb`. |
-| Ubuntu 24.04, ARM64 | [Linux ARM64 Debian package](https://github.com/SUP3RMASS1VE/Faderwake/releases/download/v0.1.0/Faderwake-Linux-ARM64.deb) | From the download directory, run `sudo apt install ./Faderwake-Linux-ARM64.deb`. |
+| macOS 15 or later, Apple silicon or Intel | [Universal Mac ZIP](https://github.com/SUP3RMASS1VE/Faderwake/releases/download/v0.2.0/Faderwake-macOS-universal.zip) | Extract the ZIP, drag **Faderwake.app** to Applications and open it. |
+| Windows x64 | [Portable Windows ZIP](https://github.com/SUP3RMASS1VE/Faderwake/releases/download/v0.2.0/Faderwake-Windows-x64.zip) | Extract the entire folder and open **Faderwake.exe** inside it. |
+| Ubuntu 24.04, Intel or AMD 64-bit | [Linux x64 Debian package](https://github.com/SUP3RMASS1VE/Faderwake/releases/download/v0.2.0/Faderwake-Linux-x64.deb) | From the download directory, run `sudo apt install ./Faderwake-Linux-x64.deb`. |
+| Ubuntu 24.04, ARM64 | [Linux ARM64 Debian package](https://github.com/SUP3RMASS1VE/Faderwake/releases/download/v0.2.0/Faderwake-Linux-ARM64.deb) | From the download directory, run `sudo apt install ./Faderwake-Linux-ARM64.deb`. |
 
 The macOS build is ad hoc signed. If macOS asks for confirmation on first launch, Apple explains how to review the app in **System Settings → Privacy & Security**. [Apple’s guide to opening downloaded apps](https://support.apple.com/en-ie/102445)
 
@@ -57,11 +57,11 @@ In **Metadata**, edit the title, artist, album, genre, year, track number and co
 | WAV, FLAC, Apple Lossless (.m4a) | 44.1, 48, 88.2, 96, 176.4, 192 | 16 or 24 bit |
 | AAC (.m4a) | 44.1, 48 | 128 kb/s mono or 256 kb/s stereo |
 
-**Preferences** includes light and dark appearances, accent colors and keyboard shortcuts. On macOS 26 or later, **Preferences → Liquid Glass** enables Apple’s native glass material for the toolbar and track queue. Faderwake respects the system’s **Reduce Transparency** setting.
+**Preferences** includes light and dark appearances, accent colors and keyboard shortcuts.
 
 ## Build from source
 
-Install stable Rust, Node.js 22 or later and the Tauri prerequisites for your platform. On macOS, use Xcode command-line tools with the macOS 26 SDK or later for Liquid Glass support. Linux needs the ALSA and WebKitGTK 4.1 development packages. On Windows, use MSYS2 UCRT64 with Make, GCC, tar and xz to build the codecs. [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) · [Desktop build workflow](.github/workflows/desktop.yml)
+Install stable Rust, Node.js 22 or later and the Tauri prerequisites for your platform. On macOS, use Xcode command-line tools. Linux needs the ALSA and WebKitGTK 4.1 development packages. On Windows, use MSYS2 UCRT64 with Make, GCC, tar and xz to build the codecs. [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) · [Desktop build workflow](.github/workflows/desktop.yml)
 
 ```sh
 npm ci
@@ -96,7 +96,7 @@ APP_SNAPSHOT="/tmp/faderwake-snapshots" APP_SNAPSHOT_SIZE=1240x798 \
   "target/universal-apple-darwin/release/bundle/macos/Faderwake.app/Contents/MacOS/faderwake"
 ```
 
-`APP_SNAPSHOT` sets the output directory. `APP_SNAPSHOT_SIZE` sets the content size in logical points. `APP_SNAPSHOT_THEME` accepts `studio`, `system`, `ocean`, `amethyst`, `forest`, `rose` or `amber`. `APP_SNAPSHOT_PAGES` accepts `empty`, `master` (or `waveform`), `dynamics`, `spectrum`, `editor`, `metadata`, `fade-in`, `fade-out`, `preferences` and `about`. The empty view is always captured. Choosing `master` includes its dynamics and spectrogram views. Omit the page filter to capture every view and palette. On macOS 26 or later, add `APP_SNAPSHOT_GLASS=1` to capture native glass with the window compositor.
+`APP_SNAPSHOT` sets the output directory. `APP_SNAPSHOT_SIZE` sets the content size in logical points. `APP_SNAPSHOT_THEME` accepts `studio`, `system`, `ocean`, `amethyst`, `forest`, `rose` or `amber`. `APP_SNAPSHOT_PAGES` accepts `empty`, `master` (or `waveform`), `dynamics`, `spectrum`, `editor`, `metadata`, `fade-in`, `fade-out`, `preferences` and `about`. The empty view is always captured. Choosing `master` includes its dynamics and spectrogram views. Omit the page filter to capture every view and palette.
 
 ### Project layout
 

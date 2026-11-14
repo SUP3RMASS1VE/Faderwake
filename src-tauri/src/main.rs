@@ -1,5 +1,4 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-mod glass;
 mod media;
 mod menus;
 mod resample;
@@ -390,8 +389,6 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            glass::get_glass_availability,
-            glass::set_liquid_glass,
             open_demo,
             open_audio,
             get_track,
