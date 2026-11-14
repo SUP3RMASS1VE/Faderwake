@@ -4,7 +4,7 @@ Faderwake is a desktop audio mastering and waveform editor for macOS, Windows an
 
 [Download the latest release](https://github.com/SUP3RMASS1VE/Faderwake/releases/latest)
 
-![Faderwake 0.2.0 showing the Half Light artwork, combined waveform and spectrogram, ten-band EQ, output monitor and polish chain](docs/screenshots/mastering-studio.webp)
+![Faderwake 0.2.0 showing the Half Light artwork, combined waveform and spectrogram, ten-band EQ, output monitor and polish chain](docs/screenshots/mastering-studio-0.2.0.webp)
 
 ## Install Faderwake 0.2.0
 
@@ -46,7 +46,7 @@ Play a passage in **B · Mastered** and toggle one switch to hear its effect. A 
 
 ## Edit audio and file tags
 
-![The light appearance of the audio editor, with a four-second selection across the left and right channel waveforms](docs/screenshots/waveform-editor.webp)
+![The light appearance of the audio editor, with a four-second selection across the left and right channel waveforms](docs/screenshots/waveform-editor-0.2.0.webp)
 
 Drag across the waveform in **Editor** to select a passage. Zoom into it, loop it, or snap its boundaries to zero crossings. You can cut, copy, paste, keep a selection, fade, reverse, silence, normalize or apply gain. Undo and redo let you revisit edits before export. Your source file stays intact.
 
